@@ -17,9 +17,34 @@ dim(profile) #dimensions of the read-in dataset
 names(profile) # names of the columns in dataset
 str(profile) #structure of the data frame
 
+#################
+# DATA CLEANING #
+#################
+
 # Identify missing values
 levels(profile$country) #names of countries included in the dataset
 summary(profile$country) #summary of counts for each country
+
+# Change country to character from factor type
+profile$country <- as.character(profile$country)
+
+# Standardize resistiance factors ($methicillin, $vancomycin)
+summary(profile$methicillin)
+str(profile$methicillin) # nine levels for definitions for resistance?
+
+# we want to simplify this to binary output for resistant(R) and susceptible(S)
+
+factor(profile$methicillin)
+# factor(profile$methicillin) gives us I, MIC 4mgl/L, MIC 64mg/L, r, R, s, S, Unknown, Unspecified
+# now we merge r with R and s with S, while renaming the MICs
+levels(profile$methicillin) <- c("I","MIC4","MIC64","R","R","S","S","Unknown","Unspecified")
+# we also recognize MIC's of 4mg/L and 64mg/L are considered resistant. Important to note that breakpoints for methicillin MIC tests are now limited - see CDC website for info - https://www.cdc.gov/mrsa/lab/
+
+# we are also going to combine the I, MIC4, MIC64 into the resistant category (R)
+
+levels(profile$methicillin) <- c("R","R","R","R","R","S","S","Unknown","Unspecified")
+# now we only have 4 levels : R, S, Unknown, Unspecified
+
 
 
 #mis_profile<-sapply(profile,function(x) sum(is.na(x)))
@@ -31,26 +56,37 @@ report.NA <- function(v){
 	#assign(newvar,apply(is.na(v),2,sum))
 	assign(varNA,as.data.frame(colSums(is.na(v))),envir=parent.frame())
 	message(paste("Sum of NAs in",nam,"dataset:",varNA),appendLF=T)
-}
+} # Why you need to change the function environment, http://emilkirkegaard.dk/en/?p=5718
 
 report.NA(profile);ls()
 
-table(profile$sex,profile$methicillin)
+summary(profile$st) #2594 different types of STs, 4 missing values
 
-summary(profile$methicillin)
+summary(profile$methicillin) #review the MIC for each one (which ones are considered R or S)
 
 profileNAs
 # 20 strain names are missing
 # 4 STs are missing
-# 15 count
+# 15 countries
 
-no.st<-which(is.na(profile$st))
+no.st<-which(is.na(profile$st)) #row index of those with missing STs in dataset
 
-profile[no.st,]
+profile[no.st,] # info on the missing values
+# England, Eire (Ireland), 2 USA
 
-# Why you need to change the function environment, http://emilkirkegaard.dk/en/?p=5718
+####################
+# QUESTIONS TO ASK #
+####################
 
-# Which countries have the 
+# Which countries have reported ST 239?
+id.239 <- which(profile$st==239) #index of rows with ST-239
+st.239 <-profile[id.239,] #new dataframe of only ST-239
+st.239$country
+# How many counts of reports are there in North America?
+
+# How many STs are there in China, S Korea, Taiwan and Japan?
+
+
 
 # Mapping out Countries using ggmap() package
 
